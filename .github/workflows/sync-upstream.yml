@@ -1,0 +1,43 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '23 19 * * *' # 每天 UTC 19:23（北京时间 03:23）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Merge upstream master
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git remote add upstream 'https://github.com/CzJam/gjgjxweb.git'
+          git fetch upstream master
+
+          if git merge --no-edit FETCH_HEAD; then
+            git push origin HEAD:master
+            echo '上游更新已合并并推送。'
+          else
+            git merge --abort || true
+            gh issue create --repo "$GITHUB_REPOSITORY" \
+              --title '自动同步上游失败：出现合并冲突' \
+              --body "合并 [CzJam/gjgjxweb](https://github.com/CzJam/gjgjxweb) 的 master 时发生冲突（可能与本仓库的 Shizuku 快捷指令等自有改动相关）。请手动解决冲突后，重新运行 [Sync upstream 工作流](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/workflows/sync-upstream.yml)。本仓库已有改动未被覆盖。" || true
+            exit 1
+          fi
