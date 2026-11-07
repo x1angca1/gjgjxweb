@@ -78,6 +78,7 @@ import {GJTerminal} from "./terminal.js";
   const actions={
     'toggle-board-id':()=>{boardIdHidden=!boardIdHidden;renderBoardId();},
     'connect-device':()=>connectionAbort?detach():connectUsb(),'refresh-devices':()=>refreshDevices(),'refresh-display':refreshDisplay,'refresh-battery':refreshBattery,'refresh-tuning':refreshTuning,
+    'shizuku-start':async()=>{await service.shell('sh /storage/emulated/0/Android/data/moe.shizuku.privileged.api/start.sh');toast('已执行 Shizuku 启动脚本，请在手机上打开 Shizuku 查看运行状态');},
     'set-resolution':async()=>{const x=$('resolution-x').value,y=$('resolution-y').value;if(await confirm('修改分辨率',`将分辨率修改为 ${x} × ${y}？请确认数值与设备适配。`)){await service.setResolution(x,y);await refreshDisplay();toast('分辨率已修改');}},
     'reset-resolution':async()=>{await service.resetDisplay('size');await refreshDisplay();toast('已恢复物理分辨率');},
     'set-density':async()=>{await service.setDensity($('density-value').value,$('density-unit').value);await refreshDisplay();toast('显示密度已修改');},
